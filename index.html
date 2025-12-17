@@ -68,7 +68,7 @@
         let v = 0;
         const fade = setInterval(() => {
           v += 0.02;
-          audio.volume = Math.min(v, 0.8);
+          audio.volume = Math.min(v, 0.6);
           if (v >= 0.8) clearInterval(fade);
         }, 80);
       }).catch(() => {});
