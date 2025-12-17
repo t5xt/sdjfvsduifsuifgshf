@@ -4,9 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>i'm gonna kill myself</title>
+  <title>i'll always be lurking somewhere</title>
 
-  <!-- ICO favicon (this is all you need) -->
   <link rel="icon" href="/favicon.ico">
 
   <style>
@@ -16,79 +15,69 @@
       height: 100%;
       background: #000;
       overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
     }
 
     #particles {
       position: fixed;
       inset: 0;
-      z-index: 0;
       pointer-events: none;
     }
 
     .text {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+
       color: #fff;
       font-family: Helvetica, Arial, sans-serif;
       font-size: 27px;
-      text-align: center;
       letter-spacing: 0.6px;
-      position: relative;
-      z-index: 1;
-      user-select: none;
 
       text-shadow:
         0 0 8px rgba(255,255,255,0.6),
         0 0 16px rgba(255,255,255,0.4),
         0 0 32px rgba(255,255,255,0.2);
     }
-
-    .hint {
-      position: fixed;
-      bottom: 20px;
-      color: rgba(255,255,255,0.5);
-      font-size: 12px;
-      z-index: 2;
-    }
   </style>
 </head>
 
 <body>
   <canvas id="particles"></canvas>
-
   <div class="text">i'm such an idiot lmfao</div>
-  <div class="hint">click anywhere to play music</div>
 
-  <audio id="bgm" src="song.mp3" preload="auto" loop></audio>
+  <!-- muted autoplay is REQUIRED -->
+  <audio id="bgm" src="song.mp3" autoplay muted loop preload="auto"></audio>
 
   <script>
-    /* ===== AUDIO (AUTOPLAY-SAFE) ===== */
+    /* ===== AUDIO: AUTOPLAY + UNMUTE FADE ===== */
     const audio = document.getElementById("bgm");
     audio.volume = 0;
 
-    let audioStarted = false;
+    let unlocked = false;
 
-    function startAudio() {
-      if (audioStarted) return;
-      audioStarted = true;
+    function unlockAudio() {
+      if (unlocked) return;
+      unlocked = true;
 
-      audio.play().catch(() => {});
+      audio.muted = false;
+
       let v = 0;
-
       const fade = setInterval(() => {
         v += 0.02;
         audio.volume = Math.min(v, 0.8);
         if (v >= 0.8) clearInterval(fade);
-      }, 100);
-
-      document.querySelector(".hint").remove();
+      }, 80);
     }
 
-    document.addEventListener("click", startAudio, { once: true });
+    // any interaction unlocks sound
+    ["click", "keydown", "touchstart"].forEach(e =>
+      document.addEventListener(e, unlockAudio, { once: true })
+    );
 
-    /* ===== PARTICLES (DPR-CORRECT) ===== */
+    /* ===== PARTICLES: SMOOTH / FLOATY ===== */
     const canvas = document.getElementById("particles");
     const ctx = canvas.getContext("2d");
 
@@ -96,8 +85,8 @@
 
     function resize() {
       dpr = window.devicePixelRatio || 1;
-      w = window.innerWidth;
-      h = window.innerHeight;
+      w = innerWidth;
+      h = innerHeight;
 
       canvas.width = w * dpr;
       canvas.height = h * dpr;
@@ -106,40 +95,46 @@
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-
-    window.addEventListener("resize", resize);
+    addEventListener("resize", resize);
     resize();
 
     const particles = [];
-    const count = 140;
+    const COUNT = 160;
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < COUNT; i++) {
       particles.push({
         x: Math.random() * w,
         y: Math.random() * h,
-        r: Math.random() * 2 + 0.5,
-        vy: Math.random() * 1 + 0.4,
-        vx: Math.random() * 0.6 - 0.3
+        r: Math.random() * 1.8 + 0.4,
+        vy: Math.random() * 18 + 12,
+        vx: Math.random() * 8 - 4,
+        phase: Math.random() * Math.PI * 2,
+        alpha: Math.random() * 0.6 + 0.2
       });
     }
 
-    function draw() {
+    let last = performance.now();
+
+    function draw(now) {
+      const dt = (now - last) / 1000;
+      last = now;
+
       ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = "rgba(255,255,255,0.8)";
 
       for (const p of particles) {
+        p.phase += dt;
+        p.y += p.vy * dt;
+        p.x += (p.vx + Math.sin(p.phase) * 6) * dt;
+
+        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
 
-        p.y += p.vy;
-        p.x += p.vx;
-
-        if (p.y > h) {
-          p.y = -5;
+        if (p.y > h + 10) {
+          p.y = -10;
           p.x = Math.random() * w;
         }
-
         if (p.x > w) p.x = 0;
         if (p.x < 0) p.x = w;
       }
@@ -147,7 +142,7 @@
       requestAnimationFrame(draw);
     }
 
-    draw();
+    requestAnimationFrame(draw);
   </script>
 </body>
 </html>
