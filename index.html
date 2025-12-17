@@ -4,14 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>i'm gonna kill myself soon</title>
+  <title>...</title>
 
-  <!-- EXTRA SAFE FAVICON DECLARATION -->
-  <link rel="icon" sizes="32x32" href="/favicon.ico">
-
-  <!-- FAVICON -->
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
-  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <!-- ICO favicon (this is all you need) -->
+  <link rel="icon" href="/favicon.ico">
 
   <style>
     html, body {
@@ -23,9 +19,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
     }
 
-    /* PARTICLES BACKGROUND */
     #particles {
       position: fixed;
       inset: 0;
@@ -33,7 +29,6 @@
       pointer-events: none;
     }
 
-    /* GLOWING TEXT */
     .text {
       color: #fff;
       font-family: Helvetica, Arial, sans-serif;
@@ -42,11 +37,20 @@
       letter-spacing: 0.6px;
       position: relative;
       z-index: 1;
+      user-select: none;
 
       text-shadow:
         0 0 8px rgba(255,255,255,0.6),
         0 0 16px rgba(255,255,255,0.4),
         0 0 32px rgba(255,255,255,0.2);
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 20px;
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      z-index: 2;
     }
   </style>
 </head>
@@ -55,41 +59,54 @@
   <canvas id="particles"></canvas>
 
   <div class="text">i'm such an idiot lmfao</div>
+  <div class="hint">click anywhere</div>
 
-  <audio id="bgm" src="song.mp3" loop></audio>
+  <audio id="bgm" src="song.mp3" preload="auto" loop></audio>
 
   <script>
-    /* ===== AUDIO FADE IN ===== */
+    /* ===== AUDIO (AUTOPLAY-SAFE) ===== */
     const audio = document.getElementById("bgm");
     audio.volume = 0;
 
-    function fadeInAudio() {
-      let volume = 0;
-      audio.play().catch(() => {
-        document.addEventListener("click", () => audio.play(), { once: true });
-      });
+    let audioStarted = false;
+
+    function startAudio() {
+      if (audioStarted) return;
+      audioStarted = true;
+
+      audio.play().catch(() => {});
+      let v = 0;
 
       const fade = setInterval(() => {
-        if (volume < 0.8) {
-          volume += 0.02;
-          audio.volume = volume;
-        } else {
-          clearInterval(fade);
-        }
+        v += 0.02;
+        audio.volume = Math.min(v, 0.8);
+        if (v >= 0.8) clearInterval(fade);
       }, 100);
+
+      document.querySelector(".hint").remove();
     }
 
-    window.addEventListener("load", fadeInAudio);
+    document.addEventListener("click", startAudio, { once: true });
 
-    /* ===== FALLING + DRIFTING PARTICLES ===== */
+    /* ===== PARTICLES (DPR-CORRECT) ===== */
     const canvas = document.getElementById("particles");
     const ctx = canvas.getContext("2d");
 
-    let w, h;
+    let w, h, dpr;
+
     function resize() {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      w = window.innerWidth;
+      h = window.innerHeight;
+
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
+
     window.addEventListener("resize", resize);
     resize();
 
@@ -110,7 +127,7 @@
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = "rgba(255,255,255,0.8)";
 
-      for (let p of particles) {
+      for (const p of particles) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
