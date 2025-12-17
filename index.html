@@ -9,9 +9,14 @@
   <!-- PNG FAVICONS -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png">
 
   <style>
+    :root {
+      --fg: rgba(255,255,255,0.9);
+      --muted: rgba(255,255,255,0.45);
+    }
+
     html, body {
       margin: 0;
       width: 100%;
@@ -19,45 +24,56 @@
       background: #000;
       overflow: hidden;
       cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Helvetica, Arial, sans-serif;
     }
 
-    #particles {
+    canvas {
       position: fixed;
       inset: 0;
       pointer-events: none;
     }
 
-    .text {
+    .center {
       position: fixed;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1;
+      text-align: center;
+      padding: 20px;
+    }
 
-      color: #fff;
-      font-family: Helvetica, Arial, sans-serif;
-      font-size: 27px;
-      letter-spacing: 0.6px;
-      user-select: none;
-
+    .title {
+      color: var(--fg);
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 400;
+      letter-spacing: 0.4px;
+      line-height: 1.4;
       text-shadow:
-        0 0 8px rgba(255,255,255,0.6),
-        0 0 16px rgba(255,255,255,0.4),
-        0 0 32px rgba(255,255,255,0.2);
+        0 0 10px rgba(255,255,255,0.25),
+        0 0 30px rgba(255,255,255,0.15);
+      animation: fadeIn 1.4s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: none; }
     }
 
     .lurkers {
       position: fixed;
-      bottom: 12px;
-      left: 14px;
+      bottom: 14px;
+      left: 16px;
       z-index: 2;
-
-      font-family: Helvetica, Arial, sans-serif;
       font-size: 12px;
-      color: rgba(255,255,255,0.55);
-      letter-spacing: 0.4px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
       user-select: none;
+      opacity: 0;
+      animation: fadeIn 1.2s ease forwards;
+      animation-delay: 0.6s;
       white-space: nowrap;
     }
   </style>
@@ -65,8 +81,12 @@
 
 <body>
   <canvas id="particles"></canvas>
-  <div class="text">i'm such an idiot lmfao</div>
-  <div class="lurkers" id="lurkers">stop lurki.ng around</div>
+
+  <div class="center">
+    <div class="title">i'm such an idiot lmfao</div>
+  </div>
+
+  <div class="lurkers" id="lurkers">loading lurkers…</div>
 
   <audio id="bgm" src="song.mp3" loop preload="auto"></audio>
 
@@ -74,7 +94,6 @@
     /* ===== CLICK TO PLAY MUSIC ===== */
     const audio = document.getElementById("bgm");
     audio.volume = 0;
-
     let started = false;
 
     function startMusic() {
@@ -84,31 +103,28 @@
       audio.play().then(() => {
         let v = 0;
         const fade = setInterval(() => {
-          v += 0.02;
-          audio.volume = Math.min(v, 0.8);
-          if (v >= 0.8) clearInterval(fade);
+          v += 0.015;
+          audio.volume = Math.min(v, 0.75);
+          if (v >= 0.75) clearInterval(fade);
         }, 80);
       }).catch(() => {});
     }
 
     document.addEventListener("click", startMusic, { once: true });
 
-    /* ===== SMOOTH FLOATING PARTICLES ===== */
+    /* ===== PARTICLES ===== */
     const canvas = document.getElementById("particles");
     const ctx = canvas.getContext("2d");
-
     let w, h, dpr;
 
     function resize() {
-      dpr = window.devicePixelRatio || 1;
+      dpr = devicePixelRatio || 1;
       w = innerWidth;
       h = innerHeight;
-
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = w + "px";
       canvas.style.height = h + "px";
-
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
@@ -116,17 +132,17 @@
     resize();
 
     const particles = [];
-    const COUNT = 160;
+    const COUNT = 140;
 
     for (let i = 0; i < COUNT; i++) {
       particles.push({
         x: Math.random() * w,
         y: Math.random() * h,
-        r: Math.random() * 1.8 + 0.4,
-        vy: Math.random() * 20 + 10,
-        vx: Math.random() * 10 - 5,
+        r: Math.random() * 1.6 + 0.4,
+        vy: Math.random() * 18 + 8,
+        vx: Math.random() * 6 - 3,
         phase: Math.random() * Math.PI * 2,
-        alpha: Math.random() * 0.6 + 0.2
+        a: Math.random() * 0.5 + 0.2
       });
     }
 
@@ -135,15 +151,14 @@
     function draw(now) {
       const dt = (now - last) / 1000;
       last = now;
-
       ctx.clearRect(0, 0, w, h);
 
       for (const p of particles) {
         p.phase += dt;
         p.y += p.vy * dt;
-        p.x += (p.vx + Math.sin(p.phase) * 6) * dt;
+        p.x += (p.vx + Math.sin(p.phase) * 5) * dt;
 
-        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+        ctx.fillStyle = `rgba(255,255,255,${p.a})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
@@ -160,6 +175,36 @@
     }
 
     requestAnimationFrame(draw);
+
+    /* ===== LURKER COUNTER ===== */
+    const lurkersEl = document.getElementById("lurkers");
+    const NAMESPACE = "lurki-ng";
+    const KEY = "visits";
+
+    function animateCount(target) {
+      const start = performance.now();
+      const duration = 1200;
+
+      function frame(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const value = Math.floor(eased * target);
+
+        lurkersEl.textContent =
+          `${value.toLocaleString()} people have been lurking around here`;
+
+        if (t < 1) requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`)
+      .then(r => r.json())
+      .then(d => animateCount(d.value))
+      .catch(() => {
+        lurkersEl.textContent = "someone has been lurking around here";
+      });
   </script>
 </body>
 </html>
