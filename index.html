@@ -6,7 +6,6 @@
 
   <title>i'll always be lurking somewhere</title>
 
-  <!-- ICO favicon -->
   <link rel="icon" href="/favicon.ico">
 
   <style>
@@ -44,12 +43,27 @@
         0 0 16px rgba(255,255,255,0.4),
         0 0 32px rgba(255,255,255,0.2);
     }
+
+    .lurkers {
+      position: fixed;
+      bottom: 12px;
+      left: 14px;
+      z-index: 2;
+
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.4px;
+      user-select: none;
+      white-space: nowrap;
+    }
   </style>
 </head>
 
 <body>
   <canvas id="particles"></canvas>
   <div class="text">i'm such an idiot lmfao</div>
+  <div class="lurkers" id="lurkers">loading…</div>
 
   <audio id="bgm" src="song.mp3" loop preload="auto"></audio>
 
@@ -68,13 +82,46 @@
         let v = 0;
         const fade = setInterval(() => {
           v += 0.02;
-          audio.volume = Math.min(v, 0.6);
+          audio.volume = Math.min(v, 0.8);
           if (v >= 0.8) clearInterval(fade);
         }, 80);
       }).catch(() => {});
     }
 
     document.addEventListener("click", startMusic, { once: true });
+
+    /* ===== ANIMATED LURKER COUNTER ===== */
+    const lurkersEl = document.getElementById("lurkers");
+
+    const NAMESPACE = "your-site-name-here"; // CHANGE THIS
+    const KEY = "lurkers";
+
+    function animateCount(target) {
+      const duration = 1200;
+      const start = performance.now();
+
+      function easeOut(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function frame(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const value = Math.floor(easeOut(progress) * target);
+        lurkersEl.textContent =
+          `${value.toLocaleString()} people have been lurking around here`;
+
+        if (progress < 1) requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`)
+      .then(res => res.json())
+      .then(data => animateCount(data.value))
+      .catch(() => {
+        lurkersEl.textContent = "someone has been lurking around here";
+      });
 
     /* ===== SMOOTH FLOATING PARTICLES ===== */
     const canvas = document.getElementById("particles");
@@ -84,8 +131,8 @@
 
     function resize() {
       dpr = window.devicePixelRatio || 1;
-      w = window.innerWidth;
-      h = window.innerHeight;
+      w = innerWidth;
+      h = innerHeight;
 
       canvas.width = w * dpr;
       canvas.height = h * dpr;
@@ -95,7 +142,7 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
-    window.addEventListener("resize", resize);
+    addEventListener("resize", resize);
     resize();
 
     const particles = [];
@@ -146,4 +193,3 @@
   </script>
 </body>
 </html>
-
