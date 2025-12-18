@@ -6,7 +6,6 @@
 
   <title>♰</title>
 
-  <!-- PNG FAVICONS -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
   <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png">
@@ -117,7 +116,6 @@
 
     document.addEventListener("click", startMusic, { once: true });
 
-    /* ===== PARTICLES ===== */
     const canvas = document.getElementById("particles");
     const ctx = canvas.getContext("2d");
     let w, h, dpr;
@@ -181,7 +179,6 @@
 
     requestAnimationFrame(draw);
 
-    /* ===== LURKER COUNTER ===== */
     const lurkersEl = document.getElementById("lurkers");
     const NAMESPACE = "lurki-ng";
     const KEY = "visits";
